@@ -10,7 +10,7 @@ const fetchTransactions = () => {
 
 const email = localStorage.getItem("email");
 
-fetch("http://localhost:8080/transactions/list?email=" + email)
+fetch("https://budgeting-app-1-8977.onrender.com/transactions/list?email=" + email)
 .then(res=>res.json())
 .then(data=>{
 
@@ -37,7 +37,7 @@ fetchTransactions();
 
 const deleteTransaction = async (id) => {
 
-await fetch(`http://localhost:8080/transactions/${id}`,{
+await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${id}`,{
 method:"DELETE"
 });
 
@@ -51,7 +51,7 @@ const editTransaction = async (transaction) => {
 const newDescription = prompt("Edit description",transaction.description);
 const newAmount = prompt("Edit amount",transaction.amount);
 
-await fetch(`http://localhost:8080/transactions/${transaction.id}`,{
+await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${transaction.id}`,{
 method:"PUT",
 headers:{
 "Content-Type":"application/json"

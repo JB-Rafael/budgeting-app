@@ -22,7 +22,7 @@ function Login() {
     params.append("email", email);
     params.append("password", password);
 
-    const response = await fetch("http://localhost:8080/auth/login", {
+    const response = await fetch("https://budgeting-app-1-8977.onrender.com/auth/login", {
       method: "POST",
       body: params
     });
@@ -45,7 +45,7 @@ function Login() {
     params.append("email", email);
     params.append("password", password);
 
-    const response = await fetch("http://localhost:8080/auth/register", {
+    const response = await fetch("https://budgeting-app-1-8977.onrender.com/auth/register", {
       method: "POST",
       body: params
     });

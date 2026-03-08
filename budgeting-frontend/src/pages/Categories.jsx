@@ -18,7 +18,7 @@ if(!email) return;
 
 /* CATEGORY BREAKDOWN */
 
-fetch("http://localhost:8080/transactions/category-breakdown?email=" + email)
+fetch("https://budgeting-app-1-8977.onrender.com/transactions/category-breakdown?email=" + email)
 .then(res=>res.json())
 .then(data=>{
 
@@ -41,7 +41,7 @@ setCategoryData([]);
 
 /* WEEKLY EXPENSES */
 
-fetch("http://localhost:8080/transactions/weekly-expenses?email=" + email)
+fetch("https://budgeting-app-1-8977.onrender.com/transactions/weekly-expenses?email=" + email)
 .then(res=>res.json())
 .then(data=>{
 

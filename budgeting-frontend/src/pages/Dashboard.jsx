@@ -28,28 +28,28 @@ function Dashboard() {
     const month = new Date().getMonth() + 1;
 
     const summaryResponse = await fetch(
-      `http://localhost:8080/transactions/monthly-summary?email=${email}&year=${year}&month=${month}`
+      `https://budgeting-app-1-8977.onrender.com/transactions/monthly-summary?email=${email}&year=${year}&month=${month}`
     );
 
     const summaryData = await summaryResponse.json();
     setSummary(summaryData);
 
     const breakdownResponse = await fetch(
-      `http://localhost:8080/transactions/category-breakdown?email=${email}`
+      `https://budgeting-app-1-8977.onrender.com/transactions/category-breakdown?email=${email}`
     );
 
     const breakdownData = await breakdownResponse.json();
     setBreakdown(breakdownData);
 
     const categoriesResponse = await fetch(
-      "http://localhost:8080/categories/list"
+      "https://budgeting-app-1-8977.onrender.com/categories/list"
     );
 
     const categoriesData = await categoriesResponse.json();
     setCategories(categoriesData);
 
     const transactionsResponse = await fetch(
-      `http://localhost:8080/transactions/list?email=${email}`
+      `https://budgeting-app-1-8977.onrender.com/transactions/list?email=${email}`
     );
 
     const transactionsData = await transactionsResponse.json();
@@ -64,7 +64,7 @@ function Dashboard() {
     params.append("categoryId", categoryId);
     params.append("description", description);
 
-    const response = await fetch("http://localhost:8080/transactions/add", {
+    const response = await fetch("https://budgeting-app-1-8977.onrender.com/transactions/add", {
       method: "POST",
       body: params
     });
