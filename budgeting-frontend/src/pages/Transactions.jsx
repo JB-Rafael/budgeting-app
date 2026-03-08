@@ -37,6 +37,10 @@ fetchTransactions();
 
 const deleteTransaction = async (id) => {
 
+const confirmDelete = window.confirm("Are you sure you want to delete this transaction?");
+
+if(!confirmDelete) return;
+
 await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${id}`,{
 method:"DELETE"
 });
@@ -48,8 +52,19 @@ fetchTransactions();
 
 const editTransaction = async (transaction) => {
 
-const newDescription = prompt("Edit description",transaction.description);
-const newAmount = prompt("Edit amount",transaction.amount);
+const newDescription = prompt("Edit description", transaction.description);
+
+if(newDescription === null) return;
+
+const newAmount = prompt("Edit amount", transaction.amount);
+
+if(newAmount === null) return;
+
+const finalDescription =
+newDescription.trim() === "" ? transaction.description : newDescription;
+
+const finalAmount =
+newAmount.trim() === "" ? transaction.amount : newAmount;
 
 await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${transaction.id}`,{
 method:"PUT",
@@ -58,8 +73,8 @@ headers:{
 },
 body:JSON.stringify({
 ...transaction,
-description:newDescription,
-amount:newAmount
+description: finalDescription,
+amount: finalAmount
 })
 });
 
