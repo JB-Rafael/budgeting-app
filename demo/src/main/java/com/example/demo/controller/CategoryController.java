@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.example.demo.repository.CategoryRepository;
 import com.example.demo.model.Category;
 
+@CrossOrigin(origins = "https://jbrafael-budget-app.vercel.app")
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {

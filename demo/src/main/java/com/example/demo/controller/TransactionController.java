@@ -25,7 +25,7 @@ import com.example.demo.model.User;
 import com.example.demo.repository.CategoryRepository;
 import com.example.demo.repository.TransactionRepository;
 import com.example.demo.repository.UserRepository;
-
+@CrossOrigin(origins = "https://jbrafael-budget-app.vercel.app")
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
