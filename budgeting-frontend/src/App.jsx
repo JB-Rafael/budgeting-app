@@ -1,6 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
+import Categories from "./pages/Categories";
 
 function App() {
 
@@ -10,7 +13,14 @@ function App() {
       <Routes>
 
         <Route path="/" element={<Login />} />
+
         <Route path="/dashboard" element={<Dashboard />} />
+
+        <Route path="/transactions" element={<Transactions />} />
+
+        <Route path="/categories" element={<Categories />} />
+
+        <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>
 

@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import Layout from "../components/Layout";
+
 
 const COLORS = ["#0088FE","#00C49F","#FFBB28","#FF8042","#A28BFF","#FF6699"];
 
 function Dashboard() {
 
-  const location = useLocation();
-  const email = location.state?.email;
+  const email = localStorage.getItem("email");
 
   const [summary, setSummary] = useState(null);
   const [breakdown, setBreakdown] = useState({});

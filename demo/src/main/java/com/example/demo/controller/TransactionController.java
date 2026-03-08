@@ -1,10 +1,18 @@
 package com.example.demo.controller;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,134 +39,221 @@ public class TransactionController {
     @Autowired
     private CategoryRepository categoryRepository;
 
+
+    /* ADD TRANSACTION */
+
     @PostMapping("/add")
-public MessageResponse addTransaction(@RequestParam String email,
-                             @RequestParam Double amount,
-                             @RequestParam Long categoryId,
-                             @RequestParam String description) {
+    public MessageResponse addTransaction(
+            @RequestParam String email,
+            @RequestParam Double amount,
+            @RequestParam Long categoryId,
+            @RequestParam String description) {
 
-    var optionalUser = userRepository.findByEmail(email);
+        var optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return new MessageResponse("User not found");
+        }
 
-    if (optionalUser.isEmpty()) {
-        return new MessageResponse("User not found");
+        var optionalCategory = categoryRepository.findById(categoryId);
+        if (optionalCategory.isEmpty()) {
+            return new MessageResponse("Category not found");
+        }
+
+        User user = optionalUser.get();
+        Category category = optionalCategory.get();
+
+        Transaction transaction = new Transaction();
+        transaction.setAmount(amount);
+        transaction.setDescription(description);
+        transaction.setDate(LocalDate.now());
+        transaction.setType(category.getType());
+        transaction.setUser(user);
+        transaction.setCategory(category);
+
+        transactionRepository.save(transaction);
+
+        return new MessageResponse("Transaction added");
     }
 
-    var optionalCategory = categoryRepository.findById(categoryId);
 
-    if (optionalCategory.isEmpty()) {
-        return new MessageResponse("Category not found");
-    }
-
-    User user = optionalUser.get();
-    Category category = optionalCategory.get();
-
-    Transaction transaction = new Transaction();
-    transaction.setAmount(amount);
-    transaction.setDescription(description);
-    transaction.setDate(java.time.LocalDate.now());
-    transaction.setType(category.getType());
-    transaction.setUser(user);
-    transaction.setCategory(category);
-
-    transactionRepository.save(transaction);
-
-    return new MessageResponse("Transaction added");
-}
+    /* TOTAL SUMMARY */
 
     @GetMapping("/summary")
-public SummaryResponse summary(@RequestParam String email) {
+    public SummaryResponse summary(@RequestParam String email) {
 
-    var optionalUser = userRepository.findByEmail(email);
+        var optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return new SummaryResponse(0, 0, 0);
+        }
 
-    if (optionalUser.isEmpty()) {
-        return new SummaryResponse(0,0,0);
+        User user = optionalUser.get();
+
+        Double income = transactionRepository.getTotalIncome(user);
+        Double expense = transactionRepository.getTotalExpense(user);
+        Double credit = transactionRepository.getTotalCredit(user);
+
+        if (income == null) income = 0.0;
+        if (expense == null) expense = 0.0;
+        if (credit == null) credit = 0.0;
+
+        double balance = income - expense - credit;
+
+        return new SummaryResponse(income, expense, balance);
     }
 
-    User user = optionalUser.get();
 
-    Double income = transactionRepository.getTotalIncome(user);
-    Double expense = transactionRepository.getTotalExpense(user);
-    Double credit = transactionRepository.getTotalCredit(user);
-
-    if (income == null) income = 0.0;
-    if (expense == null) expense = 0.0;
-    if (credit == null) credit = 0.0;
-
-    double balance = income - expense - credit;
-
-    return new SummaryResponse(income, expense, balance);
-}
+    /* LIST USER TRANSACTIONS */
 
     @GetMapping("/list")
-public Object listTransactions(@RequestParam String email) {
+    public Object listTransactions(@RequestParam String email) {
 
-    var optionalUser = userRepository.findByEmail(email);
+        var optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return new MessageResponse("User not found");
+        }
 
-    if (optionalUser.isEmpty()) {
-        return new MessageResponse("User not found");
+        return transactionRepository.findByUser(optionalUser.get());
     }
 
-    User user = optionalUser.get();
 
-    return transactionRepository.findByUser(user);
-}
+    /* MONTHLY SUMMARY */
 
     @GetMapping("/monthly-summary")
-public SummaryResponse monthlySummary(@RequestParam String email,
-                             @RequestParam int year,
-                             @RequestParam int month) {
+    public SummaryResponse monthlySummary(
+            @RequestParam String email,
+            @RequestParam int year,
+            @RequestParam int month) {
 
-    var optionalUser = userRepository.findByEmail(email);
-
-    if (optionalUser.isEmpty()) {
-        return new SummaryResponse(0, 0, 0);
-    }
-
-    User user = optionalUser.get();
-
-    LocalDate start = LocalDate.of(year, month, 1);
-    LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
-
-    var transactions = transactionRepository
-            .findByUserAndDateBetween(user, start, end);
-
-    double income = 0;
-    double expense = 0;
-
-    for (Transaction t : transactions) {
-        if (t.getType().equals("income")) {
-            income += t.getAmount();
-        } else {
-            expense += t.getAmount();
+        var optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return new SummaryResponse(0, 0, 0);
         }
+
+        User user = optionalUser.get();
+
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+
+        var transactions = transactionRepository
+                .findByUserAndDateBetween(user, start, end);
+
+        double income = 0;
+        double expense = 0;
+
+        for (Transaction t : transactions) {
+            if (t.getType().equals("income")) {
+                income += t.getAmount();
+            } else {
+                expense += t.getAmount();
+            }
+        }
+
+        double balance = income - expense;
+
+        return new SummaryResponse(income, expense, balance);
     }
 
-    double balance = income - expense;
 
-    return new SummaryResponse(income, expense, balance);
-}
+    /* CATEGORY BREAKDOWN */
 
     @GetMapping("/category-breakdown")
-public Object categoryBreakdown(@RequestParam String email) {
+    public Object categoryBreakdown(@RequestParam String email) {
+
+        var optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return new MessageResponse("User not found");
+        }
+
+        User user = optionalUser.get();
+
+        var result = transactionRepository.getExpenseByCategory(user);
+
+        Map<String, Double> breakdown = new HashMap<>();
+
+        for (Object[] row : result) {
+            String category = (String) row[0];
+            Double total = (Double) row[1];
+            breakdown.put(category, total);
+        }
+
+        return breakdown;
+    }
+
+
+    /* DELETE */
+
+    @DeleteMapping("/{id}")
+    public void deleteTransaction(@PathVariable Long id) {
+        transactionRepository.deleteById(id);
+    }
+
+
+    /* UPDATE */
+
+    @PutMapping("/{id}")
+    public Transaction updateTransaction(
+            @PathVariable Long id,
+            @RequestBody Transaction updatedTransaction) {
+
+        Transaction transaction = transactionRepository
+                .findById(id)
+                .orElseThrow();
+
+        transaction.setAmount(updatedTransaction.getAmount());
+        transaction.setDescription(updatedTransaction.getDescription());
+        transaction.setCategory(updatedTransaction.getCategory());
+        transaction.setType(updatedTransaction.getType());
+
+        return transactionRepository.save(transaction);
+    }
+
+
+    /* WEEKLY EXPENSES (FILTERED BY USER) */
+
+    @GetMapping("/weekly-expenses")
+public List<Map<String,Object>> getWeeklyExpenses(@RequestParam String email){
 
     var optionalUser = userRepository.findByEmail(email);
 
-    if (optionalUser.isEmpty()) {
-        return new MessageResponse("User not found");
+    if(optionalUser.isEmpty()){
+        return new ArrayList<>();
     }
 
     User user = optionalUser.get();
 
-    var result = transactionRepository.getExpenseByCategory(user);
+    LocalDate startDate = LocalDate.now().minusDays(7);
 
-    java.util.Map<String, Double> breakdown = new java.util.HashMap<>();
+    List<Object[]> results = transactionRepository.getWeeklyExpenses(user, startDate);
 
-    for (Object[] row : result) {
-        String category = (String) row[0];
-        Double total = (Double) row[1];
-        breakdown.put(category, total);
+    List<Map<String,Object>> response = new ArrayList<>();
+
+    for(Object[] row : results){
+        Map<String,Object> item = new HashMap<>();
+        item.put("day", row[0].toString());
+        item.put("amount", row[1]);
+        response.add(item);
     }
 
-    return breakdown;
+    return response;
 }
+
+    /* CATEGORY SUMMARY (OPTIONAL ENDPOINT) */
+
+    @GetMapping("/category-summary")
+    public List<Map<String,Object>> getCategorySummary(){
+
+        List<Object[]> results = transactionRepository.getCategorySummary();
+
+        List<Map<String,Object>> response = new ArrayList<>();
+
+        for(Object[] row : results){
+            Map<String,Object> item = new HashMap<>();
+            item.put("category", row[0]);
+            item.put("amount", row[1]);
+            response.add(item);
+        }
+
+        return response;
+    }
+
 }

@@ -31,8 +31,12 @@ function Login() {
     setMessage(data.message);
 
     if (data.message === "Login successful") {
-      navigate("/dashboard", { state: { email } });
-    }
+
+  localStorage.setItem("email", email);
+
+  navigate("/dashboard");
+
+}
   };
 
   const handleRegister = async () => {
