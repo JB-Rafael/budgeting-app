@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.model.Category;
 import com.example.demo.repository.CategoryRepository;
 
-@CrossOrigin(origins = "https://jbrafael-budget-app.vercel.app")
+@CrossOrigin(origins = "https://budgeting-app-nine-pi.vercel.app/")
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {

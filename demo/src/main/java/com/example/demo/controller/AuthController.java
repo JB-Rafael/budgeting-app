@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.dto.MessageResponse;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
-@CrossOrigin(origins = "https://jbrafael-budget-app.vercel.app")
+@CrossOrigin(origins = "https://budgeting-app-nine-pi.vercel.app/")
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
