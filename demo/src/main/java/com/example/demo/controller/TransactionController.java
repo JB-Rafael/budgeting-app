@@ -69,6 +69,10 @@ public class TransactionController {
             return new MessageResponse("Description cannot be empty");
         }
 
+        if(description.length() > 30){
+            return new MessageResponse("Description must be 30 characters or less");
+        }
+
         String cleanDescription = description.replace("<","").replace(">","");
 
         User user = optionalUser.get();
@@ -220,6 +224,10 @@ public class TransactionController {
 
         if(description == null || description.trim().isEmpty()){
             throw new RuntimeException("Description cannot be empty");
+        }
+
+        if(description.length() > 30){
+            throw new RuntimeException("Description must be 30 characters or less");
         }
 
         String cleanDescription = description.replace("<","").replace(">","");

@@ -47,6 +47,11 @@ alert("Description cannot be empty");
 return;
 }
 
+if(description.length>30){
+alert("Description must be 30 characters or less");
+return;
+}
+
 const numAmount = Number(amount);
 
 if(isNaN(numAmount) || numAmount<=0 || numAmount>1000000){
@@ -71,6 +76,8 @@ fetchTransactions();
 
 
 const confirmDelete = async ()=>{
+
+if(!deleteId) return;
 
 await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${deleteId}`,{
 method:"DELETE"
@@ -142,7 +149,10 @@ Edit
 
 <button
 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-onClick={()=>setDeleteId(t.id)}
+onClick={(e)=>{
+e.stopPropagation();
+setDeleteId(t.id);
+}}
 >
 Delete
 </button>
@@ -172,13 +182,16 @@ Delete
 <input
 className="w-full border p-2 rounded"
 value={description}
+maxLength={30}
 onChange={e=>setDescription(e.target.value)}
-placeholder="Description"
+placeholder="Description (max 30 chars)"
 />
 
 <input
 className="w-full border p-2 rounded"
 type="number"
+min="1"
+max="1000000"
 value={amount}
 onChange={e=>setAmount(e.target.value)}
 placeholder="Amount"
