@@ -26,6 +26,7 @@ import com.example.demo.model.User;
 import com.example.demo.repository.CategoryRepository;
 import com.example.demo.repository.TransactionRepository;
 import com.example.demo.repository.UserRepository;
+
 @CrossOrigin(origins = "https://jbrafael-budget-app.vercel.app")
 @RestController
 @RequestMapping("/transactions")
@@ -60,12 +61,22 @@ public class TransactionController {
             return new MessageResponse("Category not found");
         }
 
+        if(amount == null || amount <= 0 || amount > 1000000){
+            return new MessageResponse("Invalid transaction amount");
+        }
+
+        if(description == null || description.trim().isEmpty()){
+            return new MessageResponse("Description cannot be empty");
+        }
+
+        String cleanDescription = description.replace("<","").replace(">","");
+
         User user = optionalUser.get();
         Category category = optionalCategory.get();
 
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
-        transaction.setDescription(description);
+        transaction.setDescription(cleanDescription);
         transaction.setDate(LocalDate.now());
         transaction.setType(category.getType());
         transaction.setUser(user);
@@ -200,8 +211,21 @@ public class TransactionController {
                 .findById(id)
                 .orElseThrow();
 
-        transaction.setAmount(updatedTransaction.getAmount());
-        transaction.setDescription(updatedTransaction.getDescription());
+        Double amount = updatedTransaction.getAmount();
+        String description = updatedTransaction.getDescription();
+
+        if(amount == null || amount <= 0 || amount > 1000000){
+            throw new RuntimeException("Invalid transaction amount");
+        }
+
+        if(description == null || description.trim().isEmpty()){
+            throw new RuntimeException("Description cannot be empty");
+        }
+
+        String cleanDescription = description.replace("<","").replace(">","");
+
+        transaction.setAmount(amount);
+        transaction.setDescription(cleanDescription);
         transaction.setCategory(updatedTransaction.getCategory());
         transaction.setType(updatedTransaction.getType());
 
@@ -209,36 +233,37 @@ public class TransactionController {
     }
 
 
-    /* WEEKLY EXPENSES (FILTERED BY USER) */
+    /* WEEKLY EXPENSES */
 
     @GetMapping("/weekly-expenses")
-public List<Map<String,Object>> getWeeklyExpenses(@RequestParam String email){
+    public List<Map<String,Object>> getWeeklyExpenses(@RequestParam String email){
 
-    var optionalUser = userRepository.findByEmail(email);
+        var optionalUser = userRepository.findByEmail(email);
 
-    if(optionalUser.isEmpty()){
-        return new ArrayList<>();
+        if(optionalUser.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        User user = optionalUser.get();
+
+        LocalDate startDate = LocalDate.now().minusDays(7);
+
+        List<Object[]> results = transactionRepository.getWeeklyExpenses(user, startDate);
+
+        List<Map<String,Object>> response = new ArrayList<>();
+
+        for(Object[] row : results){
+            Map<String,Object> item = new HashMap<>();
+            item.put("day", row[0].toString());
+            item.put("amount", row[1]);
+            response.add(item);
+        }
+
+        return response;
     }
 
-    User user = optionalUser.get();
 
-    LocalDate startDate = LocalDate.now().minusDays(7);
-
-    List<Object[]> results = transactionRepository.getWeeklyExpenses(user, startDate);
-
-    List<Map<String,Object>> response = new ArrayList<>();
-
-    for(Object[] row : results){
-        Map<String,Object> item = new HashMap<>();
-        item.put("day", row[0].toString());
-        item.put("amount", row[1]);
-        response.add(item);
-    }
-
-    return response;
-}
-
-    /* CATEGORY SUMMARY (OPTIONAL ENDPOINT) */
+    /* CATEGORY SUMMARY */
 
     @GetMapping("/category-summary")
     public List<Map<String,Object>> getCategorySummary(){

@@ -1,27 +1,26 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 
-function Transactions() {
+function Transactions(){
 
 const [transactions,setTransactions] = useState([]);
 const [loading,setLoading] = useState(true);
+
+const [editing,setEditing] = useState(null);
+const [description,setDescription] = useState("");
+const [amount,setAmount] = useState("");
+
+const [deleteId,setDeleteId] = useState(null);
 
 const fetchTransactions = () => {
 
 const email = localStorage.getItem("email");
 
-fetch("https://budgeting-app-1-8977.onrender.com/transactions/list?email=" + email)
+fetch("https://budgeting-app-1-8977.onrender.com/transactions/list?email="+email)
 .then(res=>res.json())
 .then(data=>{
-
-if(Array.isArray(data)){
-setTransactions(data);
-}else{
-setTransactions([]);
-}
-
+setTransactions(Array.isArray(data)?data:[]);
 setLoading(false);
-
 })
 .catch(()=>{
 setTransactions([]);
@@ -35,49 +34,49 @@ fetchTransactions();
 },[]);
 
 
-const deleteTransaction = async (id) => {
+const openEdit = (t)=>{
+setEditing(t);
+setDescription(t.description);
+setAmount(t.amount);
+};
 
-const confirmDelete = window.confirm("Are you sure you want to delete this transaction?");
+const saveEdit = async ()=>{
 
-if(!confirmDelete) return;
+if(description.trim()===""){
+alert("Description cannot be empty");
+return;
+}
 
-await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${id}`,{
-method:"DELETE"
+const numAmount = Number(amount);
+
+if(isNaN(numAmount) || numAmount<=0 || numAmount>1000000){
+alert("Amount must be between 1 and 1,000,000");
+return;
+}
+
+await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${editing.id}`,{
+method:"PUT",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({
+...editing,
+description:description,
+amount:numAmount
+})
 });
 
+setEditing(null);
 fetchTransactions();
 
 };
 
 
-const editTransaction = async (transaction) => {
+const confirmDelete = async ()=>{
 
-const newDescription = prompt("Edit description", transaction.description);
-
-if(newDescription === null) return;
-
-const newAmount = prompt("Edit amount", transaction.amount);
-
-if(newAmount === null) return;
-
-const finalDescription =
-newDescription.trim() === "" ? transaction.description : newDescription;
-
-const finalAmount =
-newAmount.trim() === "" ? transaction.amount : newAmount;
-
-await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${transaction.id}`,{
-method:"PUT",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-...transaction,
-description: finalDescription,
-amount: finalAmount
-})
+await fetch(`https://budgeting-app-1-8977.onrender.com/transactions/${deleteId}`,{
+method:"DELETE"
 });
 
+setDeleteId(null);
 fetchTransactions();
 
 };
@@ -96,30 +95,25 @@ Transactions
 <table className="w-full text-left text-xl">
 
 <thead className="border-b text-2xl font-semibold">
-
 <tr>
-
 <th className="py-4">Date</th>
 <th>Description</th>
 <th>Amount</th>
 <th>Type</th>
 <th>Actions</th>
-
 </tr>
-
 </thead>
 
 <tbody>
 
 {loading ? (
-
 <tr>
 <td colSpan="5" className="py-10 text-center text-xl">
 Loading...
 </td>
 </tr>
 
-) : transactions.length === 0 ? (
+) : transactions.length===0 ? (
 
 <tr>
 <td colSpan="5" className="py-10 text-center text-xl">
@@ -133,25 +127,22 @@ transactions.map((t)=>(
 <tr key={t.id} className="border-b hover:bg-gray-50 transition">
 
 <td className="py-5">{t.date}</td>
-
 <td>{t.description}</td>
-
 <td className="font-semibold">{t.amount}</td>
-
 <td className="capitalize">{t.type}</td>
 
 <td className="flex gap-3 py-5">
 
 <button
-className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-base font-medium"
-onClick={()=>editTransaction(t)}
+className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+onClick={()=>openEdit(t)}
 >
 Edit
 </button>
 
 <button
-className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-base font-medium"
-onClick={()=>deleteTransaction(t.id)}
+className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+onClick={()=>setDeleteId(t.id)}
 >
 Delete
 </button>
@@ -168,6 +159,89 @@ Delete
 </table>
 
 </div>
+
+
+{editing && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+
+<div className="bg-white p-8 rounded-xl w-96 space-y-4">
+
+<h2 className="text-2xl font-bold">Edit Transaction</h2>
+
+<input
+className="w-full border p-2 rounded"
+value={description}
+onChange={e=>setDescription(e.target.value)}
+placeholder="Description"
+/>
+
+<input
+className="w-full border p-2 rounded"
+type="number"
+value={amount}
+onChange={e=>setAmount(e.target.value)}
+placeholder="Amount"
+/>
+
+<div className="flex gap-3 justify-end">
+
+<button
+className="px-4 py-2 bg-gray-400 text-white rounded"
+onClick={()=>setEditing(null)}
+>
+Cancel
+</button>
+
+<button
+className="px-4 py-2 bg-blue-500 text-white rounded"
+onClick={saveEdit}
+>
+Save
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+
+
+{deleteId && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+
+<div className="bg-white p-8 rounded-xl w-80 text-center space-y-4">
+
+<h2 className="text-xl font-bold">
+Delete this transaction?
+</h2>
+
+<div className="flex justify-center gap-4">
+
+<button
+className="px-4 py-2 bg-gray-400 text-white rounded"
+onClick={()=>setDeleteId(null)}
+>
+Cancel
+</button>
+
+<button
+className="px-4 py-2 bg-red-500 text-white rounded"
+onClick={confirmDelete}
+>
+Delete
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
 
 </Layout>
 
